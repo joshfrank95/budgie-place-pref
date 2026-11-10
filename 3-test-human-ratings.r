@@ -61,13 +61,10 @@ dflm <- left_join(dflm, interest_avgs, by = c("stimulus" = "stimulus"))
 
 dflm <- dflm %>% dplyr::select(-F01, -F02, -spectrum, -labelled_spectrum, -file)
 
-dflm_robust <- dflm %>% dplyr::filter(stimulus != "A")
 
 # Check correlations between variables
 
 dflm <- dflm %>% dplyr::mutate(across(c(spectral_centroid, rough, harmonicity, mean_mps_20_200, mean_mps_30_150, pleasantness, liking, interest), \(x) scale(x)))
-
-dflm_robust <- dflm_robust %>% dplyr::mutate(across(c(spectral_centroid, rough, harmonicity, mean_mps_20_200, mean_mps_30_150, pleasantness, liking, interest), \(x) scale(x)))
 
 cors <- Hmisc::rcorr(dflm %>% dplyr::select(-stimulus, -condition) %>% as.matrix(), type = "spearman")
 
@@ -249,16 +246,6 @@ bca_model <- function(formula, data, mode, ..., .nboot = 1000) {
   )
 }
 
-summarise_robust <- function(robust_fit) {
-  print(
-    broom::tidy(robust_fit) %>%
-      dplyr::mutate(
-        p.value = repmod::rob.pvals(robust_fit)
-      ),
-    n = 100
-  )
-}
-
 # Pleasantness models ----
 # Roughness metric: Hutchinson & Knopoff
 fit_pleasantness_hk <- lm(
@@ -277,19 +264,6 @@ fit_pleasantness_hk_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_pleasantness_hk_ci$par, n = 25)
-
-set.seed(123)
-fit_pleasantness_hk_rlm <- MASS::rlm(
-    pleasantness ~ 0 + rough + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_pleasantness_hk_rlm)
-car::vif(fit_pleasantness_hk_rlm)
-performance::check_model(fit_pleasantness_hk_rlm)
 
 # Roughness metric: MPS (20-200Hz) ----
 
@@ -311,19 +285,6 @@ fit_pleasantness_mps_20_200_ci <- bca_model(
 )
 print(fit_pleasantness_mps_20_200_ci$par, n = 25)
 
-set.seed(123)
-fit_pleasantness_mps_20_200_rlm <- MASS::rlm(
-    pleasantness ~ 0 + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_pleasantness_mps_20_200_rlm)
-car::vif(fit_pleasantness_mps_20_200_rlm)
-performance::check_model(fit_pleasantness_mps_20_200_rlm)
-
 # Roughness metric: MPS (30-150Hz) ----
 fit_pleasantness_mps_30_150 <- lm(
     pleasantness ~ mean_mps_30_150 + harmonicity + spectral_centroid,
@@ -342,19 +303,6 @@ fit_pleasantness_mps_30_150_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_pleasantness_mps_30_150_ci$par, n = 25)
-
-set.seed(123)
-fit_pleasantness_mps_30_150_rlm <- MASS::rlm(
-    pleasantness ~ 0 + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_pleasantness_mps_30_150_rlm)
-0.car::vif(fit_pleasantness_mps_30_150_rlm)
-performance::check_model(fit_pleasantness_mps_30_150_rlm)
 
 # Roughness metric: H&K and MPS (20-200Hz) ----
 fit_pleasantness_hk_mps_20_200 <- lm(
@@ -375,19 +323,6 @@ fit_pleasantness_hk_mps_20_200_ci <- bca_model(
 )
 print(fit_pleasantness_hk_mps_20_200_ci$par, n = 25)
 
-set.seed(123)
-fit_pleasantness_hk_mps_20_200_rlm <- MASS::rlm(
-    pleasantness ~ 0 + rough + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_pleasantness_hk_mps_20_200_rlm)
-car::vif(fit_pleasantness_hk_mps_20_200_rlm)
-performance::check_model(fit_pleasantness_hk_mps_20_200_rlm)
-
 # Roughness metric: H&K and MPS (30-150Hz) ----
 fit_pleasantness_hk_mps_30_150 <- lm(
     pleasantness ~ rough + mean_mps_30_150 + harmonicity + spectral_centroid,
@@ -406,19 +341,6 @@ fit_pleasantness_hk_mps_30_150_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_pleasantness_hk_mps_30_150_ci$par, n = 25)
-
-set.seed(123)
-fit_pleasantness_hk_mps_30_150_rlm <- MASS::rlm(
-    pleasantness ~ 0 + rough + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_pleasantness_hk_mps_30_150_rlm)
-car::vif(fit_pleasantness_hk_mps_30_150_rlm)
-performance::check_model(fit_pleasantness_hk_mps_30_150_rlm)
 
 # Liking models ----
 # Roughness metric: Hutchinson & Knopoff
@@ -439,19 +361,6 @@ fit_liking_hk_ci <- bca_model(
 )
 print(fit_liking_hk_ci$par, n = 25)
 
-set.seed(123)
-fit_liking_hk_rlm <- MASS::rlm(
-    liking ~ 0 + rough + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_liking_hk_rlm)
-car::vif(fit_liking_hk_rlm)
-performance::check_model(fit_liking_hk_rlm)
-
 # Roughness metric: MPS (20-200Hz) ----
 fit_liking_mps_20_200 <- lm(
     liking ~ mean_mps_20_200 + harmonicity + spectral_centroid,
@@ -470,19 +379,6 @@ fit_liking_mps_20_200_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_liking_mps_20_200_ci$par, n = 25)
-
-set.seed(123)
-fit_liking_mps_20_200_rlm <- MASS::rlm(
-    liking ~ 0 + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_liking_mps_20_200_rlm)
-car::vif(fit_liking_mps_20_200_rlm)
-performance::check_model(fit_liking_mps_20_200_rlm)
 
 # Roughness metric: MPS (30-150Hz) ----
 fit_liking_mps_30_150 <- lm(
@@ -503,19 +399,6 @@ fit_liking_mps_30_150_ci <- bca_model(
 )
 print(fit_liking_mps_30_150_ci$par, n = 25)
 
-set.seed(123)
-fit_liking_mps_30_150_rlm <- MASS::rlm(
-    liking ~ 0 + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_liking_mps_30_150_rlm)
-car::vif(fit_liking_mps_30_150_rlm)
-performance::check_model(fit_liking_mps_30_150_rlm)
-
 # Roughness metric: H&K and MPS (20-200Hz) ----
 fit_liking_hk_mps_20_200 <- lm(
     liking ~ rough + mean_mps_20_200 + harmonicity + spectral_centroid,
@@ -534,19 +417,6 @@ fit_liking_hk_mps_20_200_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_liking_hk_mps_20_200_ci$par, n = 25)
-
-set.seed(123)
-fit_liking_hk_mps_20_200_rlm <- MASS::rlm(
-    liking ~ 0 + rough + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_liking_hk_mps_20_200_rlm)
-car::vif(fit_liking_hk_mps_20_200_rlm)
-performance::check_model(fit_liking_hk_mps_20_200_rlm)
 
 # Roughness metric: H&K and MPS (30-150Hz) ----
 fit_liking_hk_mps_30_150 <- lm(
@@ -567,19 +437,6 @@ fit_liking_hk_mps_30_150_ci <- bca_model(
 )
 print(fit_liking_hk_mps_30_150_ci$par, n = 25)
 
-set.seed(123)
-fit_liking_hk_mps_30_150_rlm <- MASS::rlm(
-    liking ~ 0 + rough + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_liking_hk_mps_30_150_rlm)
-car::vif(fit_liking_hk_mps_30_150_rlm)
-performance::check_model(fit_liking_hk_mps_30_150_rlm)
-
 # Interest models ----
 # Roughness metric: Hutchinson & Knopoff
 fit_interest_hk <- lm(
@@ -598,19 +455,6 @@ fit_interest_hk_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_interest_hk_ci$par, n = 25)
-
-set.seed(123)
-fit_interest_hk_rlm <- MASS::rlm(
-    interest ~ 0 + rough + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_interest_hk_rlm)
-car::vif(fit_interest_hk_rlm)
-performance::check_model(fit_interest_hk_rlm)
 
 # Roughness metric: MPS (20-200Hz) ----
 fit_interest_mps_20_200 <- lm(
@@ -631,19 +475,6 @@ fit_interest_mps_20_200_ci <- bca_model(
 )
 print(fit_interest_mps_20_200_ci$par, n = 25)
 
-set.seed(123)
-fit_interest_mps_20_200_rlm <- MASS::rlm(
-    interest ~ 0 + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_interest_mps_20_200_rlm)
-car::vif(fit_interest_mps_20_200_rlm)
-performance::check_model(fit_interest_mps_20_200_rlm)
-
 # Roughness metric: MPS (30-150Hz) ----
 fit_interest_mps_30_150 <- lm(
     interest ~ mean_mps_30_150 + harmonicity + spectral_centroid,
@@ -662,19 +493,6 @@ fit_interest_mps_30_150_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_interest_mps_30_150_ci$par, n = 25)
-
-set.seed(123)
-fit_interest_mps_30_150_rlm <- MASS::rlm(
-    interest ~ 0 + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_interest_mps_30_150_rlm)
-car::vif(fit_interest_mps_30_150_rlm)
-performance::check_model(fit_interest_mps_30_150_rlm)
 
 # Roughness metric: H&K and MPS (20-200Hz) ----
 fit_interest_hk_mps_20_200 <- lm(
@@ -695,19 +513,6 @@ fit_interest_hk_mps_20_200_ci <- bca_model(
 )
 print(fit_interest_hk_mps_20_200_ci$par, n = 25)
 
-set.seed(123)
-fit_interest_hk_mps_20_200_rlm <- MASS::rlm(
-    interest ~ 0 + rough + mean_mps_20_200 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_interest_hk_mps_20_200_rlm)
-car::vif(fit_interest_hk_mps_20_200_rlm)
-performance::check_model(fit_interest_hk_mps_20_200_rlm)
-
 # Roughness metric: H&K and MPS (30-150Hz) ----
 fit_interest_hk_mps_30_150 <- lm(
     interest ~ rough + mean_mps_30_150 + harmonicity + spectral_centroid,
@@ -726,17 +531,4 @@ fit_interest_hk_mps_30_150_ci <- bca_model(
     .nboot = 10000
 )
 print(fit_interest_hk_mps_30_150_ci$par, n = 25)
-
-set.seed(123)
-fit_interest_hk_mps_30_150_rlm <- MASS::rlm(
-    interest ~ 0 + rough + mean_mps_30_150 + harmonicity + spectral_centroid,
-    data = dflm_robust, 
-    na.action = na.exclude, 
-    method = "MM",
-    init = "ls",
-    acc = 1e-15,
-    maxit = 10000)
-summarise_robust(fit_interest_hk_mps_30_150_rlm)
-car::vif(fit_interest_hk_mps_30_150_rlm)
-performance::check_model(fit_interest_hk_mps_30_150_rlm)
 
